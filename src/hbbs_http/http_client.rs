@@ -14,7 +14,13 @@ macro_rules! configure_http_client {
     ($builder:expr, $tls_type:expr, $danger_accept_invalid_cert:expr, $Client: ty) => {{
         // https://github.com/rustdesk/rustdesk/issues/11569
         // https://docs.rs/reqwest/latest/reqwest/struct.ClientBuilder.html#method.no_proxy
-        let mut builder = $builder.no_proxy();
+        // Only disable proxy auto-detection when we have a manual proxy configuration.
+        // Otherwise, allow system proxy detection to work (important for Windows).
+        let mut builder = if Config::get_socks().is_some() {
+            $builder.no_proxy()
+        } else {
+            $builder
+        };
 
         match $tls_type {
             TlsType::Plain => {}
